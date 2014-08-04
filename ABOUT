@@ -1,0 +1,16 @@
+Parapet - Ansible automation server
+-----------------------------------
+
+Parapet allows for a host to register information about itself
+and then be given an inventory of playbooks to be run.
+
+This allows for machines that are launched dynamically (e.g. Amazon
+Auto Scaling Groups) can register themselves and be given a list of
+instructions to provision themselves.
+
+The primary platform that this was developed for was for AWS services
+and allows you to associate playbooks according to account number and
+application. This could be used as freeform datasets for any other 
+infrastructure.
+
+Developed with web2py.

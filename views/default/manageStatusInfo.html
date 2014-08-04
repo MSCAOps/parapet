@@ -1,0 +1,13 @@
+{{extend 'layout.html'}}
+<h2>
+    Playbook Status Management
+</h2>
+{{if 'view' in request.args:}}
+{{=BEAUTIFY(data)}}
+{{=B("Job Results:")}}
+<pre>
+{{=jobOutput}}
+</pre>
+{{else:}}
+{{=grid}}
+{{pass}}
