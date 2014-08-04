@@ -1,0 +1,18 @@
+{
+    "repos": [
+        {
+            "name": "s3repo",
+            "bucket": "parapet",
+            "awskey": "MyKey",
+            "awssecret": "MySecret",
+            "type": "S3"
+        },
+        {
+            "name": "github",
+            "path": "/msca-ops/parapet",
+            "username": "msca-ops",
+            "password": "password01",
+            "type": "git"
+        }
+    ]
+}
