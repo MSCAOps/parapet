@@ -1,7 +1,7 @@
-README
+parapet
 =======
 
-parapet is a system to allow you to register your machines into logical groups,
+parapet is a web2py system to allow you to register your machines into logical groups,
 define ansible playbooks, and assign a set of playbooks to a machine group.
 
 This allows you to have reusable playbooks for simple tasks such as:
