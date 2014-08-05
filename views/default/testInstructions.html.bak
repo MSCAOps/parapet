@@ -1,6 +1,0 @@
-{{extend 'layout.html'}}
-<form action="testInstructionsResults">
-    <input type="text" name="appName">
-    <input type="text" name="accountNumber">
-    <input type="submit">
-</form>

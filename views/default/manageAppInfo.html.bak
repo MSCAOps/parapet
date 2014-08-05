@@ -1,5 +1,0 @@
-{{extend 'layout.html'}}
-<h2>
-    Database Management
-</h2>
-{{=grid}}
