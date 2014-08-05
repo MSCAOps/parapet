@@ -5,18 +5,26 @@ from gluon.debug import dbg
 
 # Don't have a default page.
 def index(): raise HTTP(404)
-    
+
+####
+# register API
+#
+# Registers the host into the hostInfo table
+#
+# With the new parapet client and init.d script is also called when
+# machine is shutting down.
+#
+# On boot:
+#  hostInfo['awsInfo']['ec2_state'] == 'running'
+#  hostInfo['awsInfo']['ec2_state_code'] == '16'
+# On termination:
+#  hostInfo['awsInfo']['ec2_state'] == 'shutting-down'
+#  hostInfo['awsInfo']['ec2_state_code'] == '32'
+
 def register():
     try:
         # Fix up the inbound variable to make the json parser happy
-        #awsInfo = request.vars.awsInfo.replace("'",'"').replace('u"','"').replace("True","true").replace("False","false").replace("None","null")
         hostInfo = json.loads(request.vars.hostData)
-        #awsInfo = hostInfo['awsInfo']
-        #userInfo = request.vars.userInfo.replace("'",'"')
-        #userInfo = hostInfo['userInfo']
-        # Convert from json to dict
-        #myUserInfo = json.loads(userInfo)
-        #myAwsInfo = json.loads(awsInfo)
         # Get the important fields
         instanceId = hostInfo['awsInfo']['ec2_id']
         myAcctId = db(db.accountInfo.accountNumber==hostInfo['awsInfo']['ec2_account_number']).select().first()
@@ -42,14 +50,19 @@ def register():
         # Something failed in the parsing of the passed in data, assume bad input
         return dict(message="requirements not met")
 
+####
+# getInstructions API
+#
+# Given the appName, accountNumber, and hostId from the client,
+# return a JSON set that describes the tasks to be run.
 def getInstructions():
     try:
         appName = request.vars.appName
         accountNumber = request.vars.accountNumber
         hostId = request.vars.hostId
-        #query = (((db.appTask.appInfo_id==db.appInfo.id)&(db.appInfo.name==appName))&(((db.appTask.accountInfo_id==db.accountInfo.id)|(db.appTask.accountInfo_id==None))&(db.accountInfo.accountNumber==accountNumber)))
-        #query = (((db.appTask.appInfo_id==db.appInfo.id)&((db.appInfo.name==appName)|(db.appInfo.name=="All Applications")))&(db.appTask.accountInfo_id==db.accountInfo.id)&((db.accountInfo.accountNumber==accountNumber)|(db.accountInfo.accountNumber=="000000000000"))&(db.appTask.pbInfo_id==db.pbInfo.id))
-        #query = ((((db.appTask.appInfo_id==db.appInfo.id)&((db.appInfo.name==appName)|(db.appInfo.name=="All Applications")))&(db.appTask.accountInfo_id==db.accountInfo.id)&((db.accountInfo.accountNumber==accountNumber)|(db.accountInfo.accountNumber=="000000000000"))&(db.appTask.pbInfo_id==db.pbInfo.id))&(db.appTask.enabled==True))
+        # Query to determine the tasks assigned to this host.
+        # We could stop requiring the accountNumber and applicationName from the client
+        # but, it doesn't hurt anything to leave it.
         query = ((((db.appTask.appInfo_id==db.appInfo.id)&((db.appInfo.name==appName)|(db.appInfo.name=="All Applications")))&(db.appTask.accountInfo_id==db.accountInfo.id)&((db.accountInfo.accountNumber==accountNumber)|(db.accountInfo.accountNumber=="000000000000"))&(db.appTask.pbInfo_id==db.pbInfo.id)&((db.appTask.devPhase==db.hostInfo.devPhase)|((db.appTask.devPhase == None)|(db.appTask.devPhase == ""))))&(db.appTask.enabled==True)&(db.hostInfo.id==hostId))
         s = db(query)
         rows = s.select(orderby=db.appTask.taskOrder)
@@ -69,6 +82,11 @@ def getInstructions():
     except:
         return dict(message="getInstructions")
 
+####
+# updateStatusInfo API
+#
+# Given the hostId, taskId, jobState and jobResults,
+# update the task status in the statusInfo DB.
 def updateStatusInfo():
     try:
         hostInfo_id = request.vars.hostInfo_id
@@ -81,6 +99,14 @@ def updateStatusInfo():
         errorString = "One of us is sad (hint: it's not me): {0}".format(e)
         return dict(message="updateStatusInfo",status="status assignment failure", errorMsg=errorString)
 
+####
+# getHostFactFinder API
+#
+# Returns a python script that can be placed into /etc/ansible/facts.d
+# to find a set of running hosts that make use of the aws filter types.
+#
+# Much more refinement required here... currently using just a static script
+# in an S3 bucket.
 def getHostFactFinder():
     try:
         keyType = request.vars.keyType
@@ -117,4 +143,4 @@ print json.dumps(esHosts)
         return XML(script)
     except Exception as e:
         errorString = "One of us is sad (hint: it's not me): {0}".format(e)
-        return dict(message="updateStatusInfo",status="status assignment failure", errorMsg=errorString)
+        return dict(message="getHostFactFinder",status="script creation failure", errorMsg=errorString)
