@@ -54,3 +54,4 @@ docs/_build/
 
 #web2py stuff
 *.bak
+.pythonhistory
