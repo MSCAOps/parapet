@@ -4,7 +4,9 @@ import datetime
 from gluon.debug import dbg
 
 # Don't have a default page.
-def index(): raise HTTP(404)
+def index():
+    session.forget()
+    raise HTTP(404)
 
 ####
 # register API
@@ -22,6 +24,7 @@ def index(): raise HTTP(404)
 #  hostInfo['awsInfo']['ec2_state_code'] == '32'
 
 def register():
+    session.forget()
     try:
         # Fix up the inbound variable to make the json parser happy
         hostInfo = json.loads(request.vars.hostData)
@@ -56,6 +59,7 @@ def register():
 # Given the appName, accountNumber, and hostId from the client,
 # return a JSON set that describes the tasks to be run.
 def getInstructions():
+    session.forget()
     try:
         appName = request.vars.appName
         accountNumber = request.vars.accountNumber
@@ -88,6 +92,7 @@ def getInstructions():
 # Given the hostId, taskId, jobState and jobResults,
 # update the task status in the statusInfo DB.
 def updateStatusInfo():
+    session.forget()
     try:
         hostInfo_id = request.vars.hostInfo_id
         appTask_id = request.vars.appTask_id
@@ -108,6 +113,7 @@ def updateStatusInfo():
 # Much more refinement required here... currently using just a static script
 # in an S3 bucket.
 def getHostFactFinder():
+    session.forget()
     try:
         keyType = request.vars.keyType
         value = request.vars.value
@@ -144,3 +150,11 @@ print json.dumps(esHosts)
     except Exception as e:
         errorString = "One of us is sad (hint: it's not me): {0}".format(e)
         return dict(message="getHostFactFinder",status="script creation failure", errorMsg=errorString)
+
+####
+# healthCheck API
+#
+# Returns OK if parapet is happy
+def healthCheck():
+    session.forget()
+    return dict(message="ok")
