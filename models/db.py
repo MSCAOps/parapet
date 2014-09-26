@@ -145,3 +145,22 @@ db.define_table('statusInfo',
                 Field('jobStartTime', 'datetime', label="Start Time"),
                 Field('jobResults', 'text', label="Results"),
                 )
+
+
+db.define_table('serverInfo',
+                Field('region', length=25, unique=True, required=True, label='Region', comment='AWS Region'),
+                Field('rest_url', length=256, required=True, label='REST URL', comment='URL of OpsView server REST API'),
+                Field('last_change', 'datetime', label='Last Change', comment='Time of the most recent action'),
+                format='%(region)s')
+
+
+db.define_table('monitorMap',
+                Field('serverInfo_id', 'reference serverInfo', required=True, label='OpsView Server'),
+                Field('accountInfo_id', 'reference accountInfo', required=True, label='Account', comment='AWS Account'),
+                Field('phase', length=25, label='Phase'),
+                # ^- these three should be a unique tuple / multicolumn primarykey
+                # not sure how to get web2py to enforce that
+
+                Field('hostgroup', length=25, label='Host Group'),
+                Field('slave_name', length=128),
+                format=lambda r: '-'.join(filter(None, (r.serverInfo_id, r.accountInfo_id, r.phase))))

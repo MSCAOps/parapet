@@ -2,6 +2,11 @@
 import json
 import datetime
 from gluon.debug import dbg
+import logging
+import autoopsview
+
+logger = logging.getLogger('web2py.app.parapet')
+logger.setLevel(logging.DEBUG)
 
 # Don't have a default page.
 def index():
@@ -28,6 +33,7 @@ def register():
     try:
         # Fix up the inbound variable to make the json parser happy
         hostInfo = json.loads(request.vars.hostData)
+
         # Get the important fields
         instanceId = hostInfo['awsInfo']['ec2_id']
         myAcctId = db(db.accountInfo.accountNumber==hostInfo['awsInfo']['ec2_account_number']).select().first()
@@ -36,22 +42,53 @@ def register():
         instanceType = hostInfo['awsInfo']['ec2_instance_type']
         devPhase = hostInfo['userInfo']['CLOUD_DEV_PHASE']
         #notesData = "AWS Info:\n{0}\nUser Info:\n{1}".format(json.dumps(myAwsInfo), json.dumps(myUserInfo))
-        try:
-            hostInfoId = db.hostInfo.update_or_insert(db.hostInfo.instance_id==instanceId,instance_id=instanceId,
-                                                      accountNumber=myAcctId.id,region=awsRegion,app=application,
-                                                      instanceType=instanceType,devPhase=devPhase,notes=json.dumps(hostInfo))
-            if hostInfoId is None:
-                hostInfo = db(db.hostInfo.instance_id==instanceId).select(db.hostInfo.id).first()
-                hostInfoId = hostInfo.id
-            return dict(accountNumber=myAcctId.id,awsRegion=awsRegion,application=application,
-                        instanceType=instanceType,devPhase=devPhase,hostInfoId=hostInfoId)
-        except Exception as e:
-            # Something failed in the DB transaction, it would be nice to say what... but that's for later
-            return dict(message="Database Error")
-        
-    except:
+
+        monitorIP = hostInfo['awsInfo']['ec2_private_ip_address']
+        account = hostInfo['awsInfo']['ec2_account_number']
+        stateCode = int(hostInfo['awsInfo']['ec2_state_code'])
+
+        # ec2_mount_paths are a new feature
+        # if an older client doesn't submit them, default to monitoring root disk
+        mountPaths = hostInfo['awsInfo'].get('ec2_mount_paths', '/')
+
+    except Exception as e:
         # Something failed in the parsing of the passed in data, assume bad input
-        return dict(message="requirements not met")
+        return dict(message="requirements not met:" + str(e))
+
+    logger.debug("registering instance:'%s' account:'%s' region:'%s' app:'%s' type:'%s' phase:'%s' monIP:'%s' state:%d",
+                 instanceId, account, awsRegion, application, instanceType, devPhase, monitorIP, stateCode)
+
+    try:
+        hostInfoId = db.hostInfo.update_or_insert(db.hostInfo.instance_id==instanceId,instance_id=instanceId,
+                                                  accountNumber=myAcctId.id,region=awsRegion,app=application,
+                                                  instanceType=instanceType,devPhase=devPhase,notes=json.dumps(hostInfo))
+        if hostInfoId is None:
+            hostInfo = db(db.hostInfo.instance_id==instanceId).select(db.hostInfo.id).first()
+            hostInfoId = hostInfo.id
+    except Exception as e:
+        # Something failed in the DB transaction, it would be nice to say what... but that's for later
+        logger.error("error inserting: " + str(e))
+        return dict(message="Database Error")
+
+    try:
+        # notify opsview
+        mon = autoopsview.AutomatedOpsView(db, awsRegion, account, application, devPhase)
+        mon.update(stateCode, instanceId, monitorIP, mountPaths)
+    except autoopsview.OpsViewError as e:
+        logger.error("error updating monitoring server: %s", str(e))
+        return dict(message='Trouble registering with monitoring server:' + str(e))
+
+    logger.debug("registered acct_id:%d region:'%s', app:'%s' type:'%s', phase:'%s', hostInfoId:'%d' hostGroup:'%s' monSlave:'%s'",
+                 myAcctId.id, awsRegion, application, instanceType, devPhase, hostInfoId, mon.hostGroup, mon.slaveName)
+    return dict(accountNumber=myAcctId.id,
+                awsRegion=awsRegion,
+                application=application,
+                instanceType=instanceType,
+                devPhase=devPhase,
+                hostInfoId=hostInfoId,
+                hostGroup=mon.hostGroup,
+                slaveName=mon.slaveName)
+
 
 ####
 # getInstructions API
