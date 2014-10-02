@@ -297,9 +297,14 @@ class AutomatedOpsView(object):
         """\
         Adds or removes a host from monitoring, based on the runstate.
         """
+        if not self.hostGroup:
+            logger.info("not monitoring {0}: no hostgroup for {1}/{2}/{3}/{4}".format(instanceId, self.region, self.account, self.application, self.phase))
+            return
+
         if stateCode == 16:
             self.addOpsViewHost_(instanceId, monitorIP, mountPaths)
         elif stateCode == 32:
             self.delOpsViewHost_(instanceId)
         else:
+            logger.info("no monitoring change for {0} stateCode {1}".format(instanceId, stateCode))
             pass # unknown state!

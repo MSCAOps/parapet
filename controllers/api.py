@@ -76,7 +76,7 @@ def register():
         mon.update(stateCode, instanceId, monitorIP, mountPaths)
     except autoopsview.OpsViewError as e:
         logger.error("error updating monitoring server: %s", str(e))
-        return dict(message='Trouble registering with monitoring server:' + str(e))
+        # this is a concern, but should not be fatal
 
     logger.debug("registered acct_id:%d region:'%s', app:'%s' type:'%s', phase:'%s', hostInfoId:'%d' hostGroup:'%s' monSlave:'%s'",
                  myAcctId.id, awsRegion, application, instanceType, devPhase, hostInfoId, mon.hostGroup, mon.slaveName)
