@@ -51,6 +51,8 @@ def register():
         # if an older client doesn't submit them, default to monitoring root disk
         mountPaths = hostInfo['awsInfo'].get('ec2_mount_paths', '/')
 
+        # stack for now is only used in naming host in monitoring, so it's okay to be non-existent
+        stack = hostInfo['userInfo'].get('CLOUD_STACK', None)
     except Exception as e:
         # Something failed in the parsing of the passed in data, assume bad input
         return dict(message="requirements not met:" + str(e))
@@ -72,7 +74,7 @@ def register():
 
     try:
         # notify opsview
-        mon = autoopsview.AutomatedOpsView(db, awsRegion, account, application, devPhase)
+        mon = autoopsview.AutomatedOpsView(db, awsRegion, account, application, stack, devPhase)
         mon.update(stateCode, instanceId, monitorIP, mountPaths)
     except autoopsview.OpsViewError as e:
         logger.error("error updating monitoring server: %s", str(e))
@@ -195,3 +197,58 @@ print json.dumps(esHosts)
 def healthCheck():
     session.forget()
     return dict(message="ok")
+
+
+def addAttributes():
+    """\
+    Adds the list of attributes provided as JSON in monAttr to the
+    monitored host provided in instanceId.
+    """
+    session.forget()
+
+    if None in (request.vars.instanceId, request.vars.monAttr):
+        return dict(message="addAttributes",
+                    status="incomplete request",
+                    errorMsg=str(e))
+    try:
+        instanceId = request.vars.instanceId
+        monAttr = json.loads(request.vars.monAttr)
+    except ValueError as e:
+        return dict(message="addAttributes",
+                    status="invalid request",
+                    errnorMsg=str(e))
+
+    iconName = request.vars.iconName
+
+    logger.debug("addAttributes - instanceId: '%s' monAttr: '%s' iconName: '%s'", instanceId, monAttr, iconName)
+
+    hostInfo = db(db.hostInfo.instance_id == instanceId).select(db.hostInfo.ALL).first()
+
+    if hostInfo is None:
+        errorMsg = "unknown instance '{0}'".format(instanceId)
+        logger.error(errorMsg)
+        raise HTTP(404, errorMsg)
+
+    accountNumber = db(db.accountInfo.id == hostInfo.accountNumber).select(db.accountInfo.accountNumber).first()['accountNumber']
+
+    # we need to pull the stack out of the notes field of the instance
+    stack = json.loads(hostInfo.notes)['userInfo'].get('CLOUD_STACK', None)
+    if stack == 'None':
+        stack = None
+
+    try:
+        mon = autoopsview.AutomatedOpsView(db,
+                                           hostInfo['region'],
+                                           accountNumber,
+                                           hostInfo['app'],
+                                           stack,
+                                           hostInfo['devPhase'])
+        if mon.addAttributes(instanceId, monAttr, iconName) is None:
+            raise HTTP(404, "could not update instance '{0}'".format(instanceId))
+    except autoopsview.OpsViewError as e:
+        logger.error("error updating monitoring server: %s", str(e))
+        return dict(message="addAttributes",
+                    status="update failed",
+                    errorMsg=str(e))
+
+    return dict(message='ok')

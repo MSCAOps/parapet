@@ -55,3 +55,6 @@ docs/_build/
 #web2py stuff
 *.bak
 .pythonhistory
+
+# OSX
+.DS_Store
