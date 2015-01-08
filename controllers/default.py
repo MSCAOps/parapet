@@ -65,43 +65,44 @@ def manageStatusInfo():
         data = {'Job Information':[taskName,instanceId,jobState,startDate]}
         processRecap = False
         jobOutput = ""
-        jobOut = row.statusInfo.jobResults.splitlines()
-        for line in jobOut:
-            if len(line) < 1:
-                continue
-            line.strip()
-            if processRecap:
-                regex="ok=(\d+)\s+changed=(\d+)\s+unreachable=(\d+)\s+failed=(\d+)"
-                p = re.compile(regex)
-                #dbg.set_trace()
-                m = p.search(line)
-                if m:
-                    line = "{0} <font color='green'>ok={1}</font> <font color='#E6B800'>changed={2}</font> unreachable={3} <font color='red'>failed={4}</font>".format(line[0:m.start()],m.groups()[0],m.groups()[1],m.groups()[2],m.groups()[3])
-                jobOutput = jobOutput+line+"\n"
-                continue
-
-            if row.statusInfo.jobState < 4:
-                if len(line) < 1 or line[0] == "<":
-                    continue
-
-            if row.statusInfo.jobState == 4:
-                if len(line) < 1 or line[0] == "<":
-                    line = "<font color='blue'>{0}</font>".format(line)
-
-            if line[0:2] == "ok":
-                line = "<font color='green'>{0}</font>".format(line)
-            elif line[0:7] == "changed":
-                line = "<font color='#E6B800'>{0}</font>".format(line)
-            elif line[0:6] == "failed":
-                line = "<font color='red'>{0}</font>".format(line)
-
-            elif "***********" in line:
-                line = "<b>{0}</b>".format(line)
-
-            if "RECAP" in line:
-                processRecap = True
-
-            jobOutput = jobOutput+line+"\n"
+        if row.statusInfo.jobResults:
+	        jobOut = row.statusInfo.jobResults.splitlines()
+	        for line in jobOut:
+	            if len(line) < 1:
+	                continue
+	            line.strip()
+	            if processRecap:
+	                regex="ok=(\d+)\s+changed=(\d+)\s+unreachable=(\d+)\s+failed=(\d+)"
+	                p = re.compile(regex)
+	                #dbg.set_trace()
+	                m = p.search(line)
+	                if m:
+	                    line = "{0} <font color='green'>ok={1}</font> <font color='#E6B800'>changed={2}</font> unreachable={3} <font color='red'>failed={4}</font>".format(line[0:m.start()],m.groups()[0],m.groups()[1],m.groups()[2],m.groups()[3])
+	                jobOutput = jobOutput+line+"\n"
+	                continue
+	
+	            if row.statusInfo.jobState < 4:
+	                if len(line) < 1 or line[0] == "<":
+	                    continue
+	
+	            if row.statusInfo.jobState == 4:
+	                if len(line) < 1 or line[0] == "<":
+	                    line = "<font color='blue'>{0}</font>".format(line)
+	
+	            if line[0:2] == "ok":
+	                line = "<font color='green'>{0}</font>".format(line)
+	            elif line[0:7] == "changed":
+	                line = "<font color='#E6B800'>{0}</font>".format(line)
+	            elif line[0:6] == "failed":
+	                line = "<font color='red'>{0}</font>".format(line)
+	
+	            elif "***********" in line:
+	                line = "<b>{0}</b>".format(line)
+	
+	            if "RECAP" in line:
+	                processRecap = True
+	
+	            jobOutput = jobOutput+line+"\n"
 
         #print TABLE(TR(TD(B('AWS Instance')),TD(row.hostInfo.instance_id)),TR(TD(B('Task')),TD(row.appTask.name)))
         #return dict(instanceId=instanceId,taskName=taskName,jobState=jobState,startDate=startDate,data=data)
