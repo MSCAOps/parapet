@@ -209,7 +209,7 @@ def addAttributes():
     if None in (request.vars.instanceId, request.vars.monAttr):
         return dict(message="addAttributes",
                     status="incomplete request",
-                    errorMsg=str(e))
+                    errorMsg="missing value")
     try:
         instanceId = request.vars.instanceId
         monAttr = json.loads(request.vars.monAttr)
