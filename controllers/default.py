@@ -171,7 +171,7 @@ def serverTask():
             taskPeriod = int(request.vars.repeatPeriod)
             taskRepeats = int(request.vars.repeatCount)
 
-            taskData = scheduler.queue_task(serverTask,pvars=taskVals,timeout=(60*60)*3,start_time=taskStartTime,stop_time=taskStopTime,period=taskPeriod,repeats=taskRepeats,sync_output=5,task_name=taskName)
+            taskData = scheduler.queue_task(serverTask,pvars=taskVals,timeout=(60*60)*3,start_time=taskStartTime,stop_time=taskStopTime,period=taskPeriod,repeats=taskRepeats,sync_output=0,task_name=taskName)
 
             if taskData.id is None:
                 logger.error("Error scheduling task: {0}".format(taskData.errors))
