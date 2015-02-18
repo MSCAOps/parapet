@@ -149,7 +149,7 @@ def serverTask():
             # {"accountId":1,"appId":"All Applications","devPhase":"","region":"","kvCheck":"{}","pbPath":"http://s3.amazonaws.com/msca-filedepot/testPing.yml"}
             taskVals = {"accountId":accountId, "appId":appId, "devPhase":request.vars.devPhase, "region":request.vars.region, "kvCheck":json.dumps(hostFilter), "pbPath":request.vars.pbPath}
             logger.debug(json.dumps(taskVals))
-            taskName = os.path.splitext(os.path.basename(taskVals['pbPath']))[0]
+            taskName = "{0}/{1}".format(db.accountInfo[accountId].friendlyName,os.path.splitext(os.path.basename(taskVals['pbPath']))[0])
 
             # Determine start_time
             myRunAt = datetime.datetime.strptime(request.vars.runAt,"%Y-%m-%d %H:%M:%S")
@@ -255,7 +255,7 @@ def serverTaskInfo():
         grid = taskData
         #grid = {'status':taskData.scheduler_run.status, 
         if taskData.scheduler_task.status == "COMPLETED" or taskData.scheduler_task.status == "EXPIRED":
-            data = {"id":int(taskData.scheduler_run.id), "status":taskData.scheduler_run.status, "workerName":taskData.scheduler_run.worker_name, "startTime":taskData.scheduler_run.start_time.isoformat(), "stopTime":taskData.scheduler_run.stop_time.isoformat(),"runNumber":"{0} of {1}".format(int(taskData.scheduler_task.times_run),int(taskData.scheduler_task.repeats)),"runResult":taskData.scheduler_run.run_result}
+            data = {"id":int(taskData.scheduler_run.id), "status":taskData.scheduler_run.status, "workerName":taskData.scheduler_run.worker_name, "startTime":taskData.scheduler_run.start_time.isoformat(), "stopTime":taskData.scheduler_run.stop_time.isoformat(),"runNumber":"{0} of {1}".format(int(taskData.scheduler_task.times_run),int(taskData.scheduler_task.repeats)),"runResult":taskData.scheduler_run.run_result,"taskName":taskData.scheduler_task.task_name}
         else:
             data = {"status":taskData.scheduler_task.status,"nextRunTime":taskData.scheduler_task.next_run_time.isoformat(), "taskName":taskData.scheduler_task.task_name,"uuid":taskData.scheduler_task.uuid}
             return dict(data=data,jobOutput="")
@@ -304,9 +304,10 @@ def serverTaskInfo():
 
         return dict(data=data,jobOutput=XML(jobOutput))
     else:
+        displayLengths = {'scheduler_task.task_name':35}
         fieldsToShow = [db.scheduler_task.id,db.scheduler_task.task_name,db.scheduler_task.status,db.scheduler_task.uuid,db.scheduler_task.times_run,db.scheduler_task.times_failed,db.scheduler_task.next_run_time]
         grid = SQLFORM.grid(db.scheduler_task,orderby=~db.scheduler_task.next_run_time,editable=False,
-            fields=fieldsToShow,deletable=False,create=False)
+            fields=fieldsToShow,deletable=False,create=False,maxtextlengths=displayLengths)
 
     return dict(grid=grid)
 

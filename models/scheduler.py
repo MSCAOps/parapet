@@ -138,7 +138,7 @@ def serverTask(accountId, appId, devPhase, region, kvCheck, pbPath=None):
             fileutils.write_file(sshKeyFilePath,thisHostKey)
             os.chmod(sshKeyFilePath,0600)
 
-            thisHostString = "{0} ansible_ssh_private_key_file={1}\n".format(hostNotes['awsInfo']['ec2_ip_address'],sshKeyFilePath)
+            thisHostString = "{0} ansible_ssh_host={1} ansible_ssh_private_key_file={2} ansible_ssh_user=ec2-user\n".format(row.instance_id,hostNotes['awsInfo']['ec2_ip_address'],sshKeyFilePath)
             invHosts = "{0} {1}".format(invHosts,thisHostString)
         else:
             logger.warn("{0} is not a valid IP address".format(hostNotes['awsInfo']['ec2_ip_address']))
