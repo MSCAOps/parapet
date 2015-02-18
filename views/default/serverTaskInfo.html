@@ -1,6 +1,6 @@
 {{extend 'layout.html'}}
 <h2>
-    Playbook Status Management
+    Server Task Status Management
 </h2>
 {{if request.is_local:}}
 {{=response.toolbar()}}
@@ -8,6 +8,7 @@
 {{if 'view' in request.args:}}
 {{=BEAUTIFY(data)}}
 {{=B("Job Results:")}}
+<input type="button" value="Toggle Verbose" onClick="toggleVerbose();"/>
 <pre>
 {{=jobOutput}}
 </pre>

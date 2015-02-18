@@ -32,6 +32,9 @@ response.menu = [
         (T('View'),False,None,[
             (T('Hosts'),False,URL('default','manageHostInfo')),
             (T('Status'),False,URL('default','manageStatusInfo'))]),
+        (T('Server Tasks'),False,None,[
+            (T('Create'),False,URL('default','serverTask')),
+            (T('View'),False,URL('default','serverTaskInfo'))]),
     ])
 ]
 

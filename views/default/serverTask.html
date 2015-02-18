@@ -1,0 +1,14 @@
+{{extend 'layout.html'}}
+<h2>
+    Server Task Scheduler
+</h2>
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}
+
+{{if len(grid)>1:}}
+{{=BEAUTIFY(grid)}}
+{{else:}}
+{{=form}}
+** Task timeout will be set to three (3) hours.
+{{pass}}

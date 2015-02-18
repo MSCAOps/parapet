@@ -13,12 +13,12 @@ if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
     #db = DAL('sqlite://storage.sqlite',pool_size=1,check_reserved=['all'])
     ## Development DAL -- Do development here!
-    db = DAL('mysql://parapet:Samsung266%@localhost/parapet',pool_size=1,check_reserved=['all'])
+    #db = DAL('mysql://parapet:Samsung266%@localhost/parapet',pool_size=1,check_reserved=['all'],lazy_tables=True)
     ## Production DAL:
     ### Enable this and go to DB Admin to update prod database
     #db = DAL('mysql://parapet:Samsung266%@parapetdb.cb9kgmsywwd0.us-west-2.rds.amazonaws.com/parapet',pool_size=5,check_reserved=['all'], migrate_enabled=True, fake_migrate_all=False)
     ### Enable this, package, deploy
-    #db = DAL('mysql://parapet:Samsung266%@parapetdb.cb9kgmsywwd0.us-west-2.rds.amazonaws.com/parapet',pool_size=5,check_reserved=['all'], migrate_enabled=True, fake_migrate_all=True)
+    db = DAL('mysql://parapet:Samsung266%@parapetdb.cb9kgmsywwd0.us-west-2.rds.amazonaws.com/parapet',pool_size=5,check_reserved=['all'], migrate_enabled=True, fake_migrate_all=True,lazy_tables=True)
     session.connect(request, response, db=db)
 else:
     ## connect to Google BigTable (optional 'google:datastore://namespace')
